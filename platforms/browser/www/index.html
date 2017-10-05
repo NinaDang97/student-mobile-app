@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+  	<!--meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' ws://192.168.1.123:3000 http://code.jquery.com https://code.jquery.com  https://ssl.gstatic.com gap: data: blob: filesystem: ; " /-->
+    <link rel="stylesheet"  href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css">
+	  <script src="https://code.jquery.com/jquery-2.1.4.js" integrity="sha256-siFczlgw4jULnUICcdm9gjQPZkw/YPDqhQ9+nAOScE4=" crossorigin="anonymous"></script>
+  	<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+	  <link rel="stylesheet" type="text/css" href="css/index.css" />
+  
+	  <title>Home</title>
+</head>
+
+<body>	
+	
+	<div data-role="popup" id="popupMenu" data-transition="pop" data-theme="a">
+		<a href="#" data-rel="back" class="ui-btn ui-btn-inline ui-corner-all ui-icon-delete ui-btn-icon-notext ui-btn-right">Sulje</a>
+
+		<ul data-role="listview">
+			<li><a href="#home" class="ui-btn">Home</a></li>
+			<li><a href="#camPage" class="ui-btn">Camera</a></li>
+			<li><a href="#weatherPage"  class="ui-btn">Weather</a></li>
+			<li><a href="#distPage" class="ui-btn">Distance</a></li>
+			<li><a href="#lunchPage" class="ui-btn">Lunch</a></li>
+		</ul>
+	</div>
+	
+	<!-- Vain dynaamiset header ja footer ominaisuudella data-position="fixed" pysyvät paikallaan vilkkumatta, kun sivua vaihdetaan -->
+	<div data-role="header" data-theme="a" data-position="fixed">
+		<h1></h1>
+		
+	 	<a href="#popupMenu" data-rel="popup" data-transition="flip" class="ui-btn ui-btn-inline  ui-corner-all ui-icon-bars ui-btn-icon-notext">Menu</a>
+	 	
+		<div data-role="navbar" id="navi">
+			<ul>
+				<li><a href="#home" class="ui-btn ui-icon-home ui-btn-icon-top  ui-mini">Home</a></li>
+				<li><a href="#camPage" class="ui-btn ui-icon-camera ui-btn-icon-top ui-mini">Camera</a></li>
+				<li><a href="#weatherPage"  class="ui-btn ui-icon-calendar ui-btn-icon-top ui-mini">Weather</a></li>
+				<li><a href="#distPage" class="ui-btn ui-icon-gear ui-btn-icon-top ui-mini">Distance</a></li>
+				<li><a href="#lunchPage" class="ui-btn ui-icon-bullets ui-btn-icon-top ui-mini">Lunch</a></li>
+			</ul>
+		</div>
+	</div>
+	
+	<div data-role="footer" data-theme="b" data-position="fixed">
+		<h4>Mobile Programming</h4>
+	</div>
+		 
+	<div data-role="page" id="home" data-title="Home">
+	
+	    <div role="main" class="ui-content ui-body-a">
+            <h1>Nearby restaurants</h1>
+            <div id="restaurantJson"></div>
+	    </div> <!-- /content -->
+	
+    </div> <!-- /page -->
+	
+	<div data-role="page" id="camPage" data-title="Camera">
+  
+	    <div role="main" class="ui-content ui-body-a">
+	      <img id="myImage">
+          <a href="#camPage" class="ui-btn ui-icon-camera ui-btn-icon-top ui-mini" id="btn-camera" style="width:100px">Camera</a>
+            
+	    </div> <!-- /content -->
+		
+    </div> <!-- /page -->
+	
+	<div data-role="page" id="weatherPage" data-title="Weather">
+  
+	    <div role="main" class="ui-content ui-body-a">
+	       <p id="weatherJson"></p>
+	    </div> <!-- /content -->
+
+    </div> <!-- /page -->
+	
+	<div data-role="page" id="distPage" data-title="Distance">
+  
+	    <div role="main" class="ui-content ui-body-a"> 
+           <label>From:</label>
+           <input type="text" id="from" name="from">
+           <label>To:</label>
+           <input type="text" id="to" name="to">
+           <button id="get" data-inline="true">Get</button><br>
+        <span id="result"></span>
+	    </div> <!-- /content -->
+        
+    </div> <!-- /page -->
+	
+	<div data-role="page" id="lunchPage" data-title="Lunch">  
+	    <div role="main" class="ui-content ui-body-a">
+             <p id="lunchJson"></p>
+	    </div> <!-- /content -->
+
+    </div> <!-- /page -->
+		
+
+
+    <script type="text/javascript" src="cordova.js"></script>
+    <script type="text/javascript" src="js/index.js"></script>
+
+    <script type="text/javascript">
+
+		$(document).one("pagebeforecreate", function () {
+	
+			$( "[data-role='header']" ).enhanceWithin().toolbar(); // Koska on sisältöä
+			$( "[data-role='footer']" ).toolbar();  // WP ei osaa asettaa oikein
+		
+			$("#popupMenu").enhanceWithin().popup(); // Koska on sisältöä	
+		});
+		
+		
+		$(document).on("pagecreate", function() {
+
+			$(document).on("pagecontainershow", function(){
+				$(".ui-content").height(getRealContentHeight());
+			})
+
+			$(window).on("resize orientationchange", function(){
+				$(".ui-content").height(getRealContentHeight());
+			})
+			
+			function getRealContentHeight() {
+				var activePage = $.mobile.pageContainer.pagecontainer("getActivePage"),
+					screen = $.mobile.getScreenHeight(),
+					header = $(".ui-header").hasClass("ui-header-fixed") ? $(".ui-header").outerHeight() - 1 : $(".ui-header").outerHeight(),
+					footer = $(".ui-footer").hasClass("ui-footer-fixed") ? $(".ui-footer").outerHeight() - 1 : $(".ui-footer").outerHeight(),
+					contentMargins = $(".ui-content", activePage).outerHeight() - $(".ui-content", activePage).height();
+				
+				var contentHeight = screen - header - footer - contentMargins;	
+				
+				return contentHeight;
+			}
+			
+			$( document ).on("pagecontainerchange", function() {
+				navi();
+			});
+			
+			$("div.ui-page").on("swipeleft", function(event){
+				if(event.handled !== true) {
+					var nextpage = $(this).next("div[data-role='page']");;
+					
+					if (nextpage.length == 0) {
+						nextpage = $("div[data-role='page']:first");
+					}
+			
+					$.mobile.pageContainer.pagecontainer ("change", nextpage);
+					event.handled = true;
+					navi();
+				}
+				return false;
+			});
+			
+			$("div.ui-page").on("swiperight", function(event){
+				if(event.handled !== true) {
+					var prevpage = $(this).prev("div[data-role='page']");
+
+					if (prevpage.length == 0) {
+						prevpage = $("div[data-role='page']:last");
+					}
+					
+					$.mobile.pageContainer.pagecontainer ("change", prevpage);
+					event.handled = true;
+					navi();
+				}
+				return false;
+			});
+			
+			function navi() {
+				// attribute data-title
+				var current = $( ".ui-page-active" ).jqmData( "title" );
+				
+				$( "[data-role='header'] h1" ).text( current );
+				
+				$( "[data-role='navbar'] a.ui-btn-active" ).removeClass( "ui-btn-active" );
+				
+				$( "[data-role='navbar'] a" ).each(function() {
+					if ( $( this ).text() === current ) {
+						$( this ).addClass( "ui-btn-active" );
+					}
+				});
+			}
+		});      
+		
+        //////////////////////CAMERA /////////////////////////
+        $(document).on("pagecreate", "#camPage", function() {
+			console.log("Camera Page is created");
+            
+            function onSuccess(imgData){
+                $("#myImage").attr("src", imgData);
+            }  
+            
+            function onError(error){
+                alert("Failed because: " + error);
+            }
+            
+            var options = { 
+                quality: 50,
+                destinationType: Camera.DestinationType.FILE_URI,
+                sourceType: Camera.PictureSourceType.CAMERA                             
+            }   
+            
+            $("#btn-camera").on("click", takePicture);
+            
+            function takePicture(){
+                navigator.camera.getPicture(onSuccess, onError, options);
+            }
+            
+                                        
+                                     
+            
+            /*function accessCamera(){
+                var options = {
+                    destinationType: Camera.DestinationType.FILE_URI,
+                    sourceType: Camera.PictureSourceType.CAMERA                    
+                };
+                navigator.camera.getPicture(onSuccess, onError, options);
+            }
+            
+            $("#btn-camera").on("click", accessCamera);*/
+            
+
+        
+           
+		})
+         
+
+        
+		// !!!!!!!!!
+        //START TO RETRIEVE AJAX API 
+        // !!!!!!!!!!      
+        
+        ///////////////////RESTAURANT NEARBY///////////////////////
+        $(document).on("pagecreate", "#home", function() {
+			console.log("Homepage created");
+            
+            fetchRestaurant();
+            
+		})
+        
+        function fetchRestaurant(){
+            //Geolocation Navigator (for weather retriever)        
+                var geolocationSuccess = function(position){
+                     alert('Latitude: '          + position.coords.latitude          + '\n' +
+                      'Longitude: '         + position.coords.longitude         + '\n' +
+                      'Altitude: '          + position.coords.altitude          + '\n' +
+                      'Accuracy: '          + position.coords.accuracy          + '\n' +
+                      'Altitude Accuracy: ' + position.coords.altitudeAccuracy  + '\n' +
+                      'Heading: '           + position.coords.heading           + '\n' +
+                      'Speed: '             + position.coords.speed             + '\n' +
+                      'Timestamp: '         + position.timestamp                + '\n');
+                    
+                    var lat =  position.coords.latitude;
+                    var lon = position.coords.longitude;
+                    console.log(lat, ", " + lon);
+                    
+                    var location = lat + "," + lon; 
+                    var myAPI = "AIzaSyC_Vla68YvByReVbel7pg9bhMGck7iXftg";
+                    var type = "restaurant";
+                    var radius = 500;
+                    $.ajax({
+                    url: "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + location + "&radius=" + radius + "&type=" + type + "&key=" + myAPI,
+                    dataType: "json",
+                    timeout: 5000
+                    })
+                    
+                    .done(function(data) {
+                        var restaurantStr = "";
+                        
+                        console.log(data);
+                        
+                        console.log(data.results[1].name);
+                        
+                        for(var i = 0; i < data.results.length; i++){
+                            restaurantStr += "<strong>" + data.results[i].name + "</strong><br>" + data.results[i].vicinity + "<br><br><br>";
+                        }
+                        
+                        $("#restaurantJson").html(restaurantStr);
+
+
+                    })
+                    
+                };
+
+                function geolocationError(error){
+                     alert('code: '    + error.code    + '\n' +
+                      'message: ' + error.message + '\n');
+                }
+                navigator.geolocation.getCurrentPosition(geolocationSuccess, geolocationError);
+        };
+        
+        
+        ///////////////////WEATHER API///////////////////////////
+        $(document).on("pagecreate", "#weatherPage", function() {
+			console.log("Weatherpage created");
+            
+			//Fetch weather
+            fetchWeather();
+            
+            
+		})  
+        
+        //Weather retriever AJAX
+            function fetchWeather() {
+                //Geolocation Navigator (for weather retriever)        
+                var geolocationSuccess = function(position){
+                     alert('Latitude: '          + position.coords.latitude          + '\n' +
+                      'Longitude: '         + position.coords.longitude         + '\n' +
+                      'Altitude: '          + position.coords.altitude          + '\n' +
+                      'Accuracy: '          + position.coords.accuracy          + '\n' +
+                      'Altitude Accuracy: ' + position.coords.altitudeAccuracy  + '\n' +
+                      'Heading: '           + position.coords.heading           + '\n' +
+                      'Speed: '             + position.coords.speed             + '\n' +
+                      'Timestamp: '         + position.timestamp                + '\n');
+                    
+                    var lat =  position.coords.latitude;
+                    var lon = position.coords.longitude;
+                    console.log(lat, ", " + lon);
+                    $.ajax({
+                    url: "http://api.openweathermap.org/data/2.5/weather?lat=" + lat + "&lon=" + lon +  "&APPID=32ebcdcea6b796e77f167dbfa6c9d366",
+                    dataType: "json",
+                    timeout: 5000
+                    })
+                    
+                    .done(function(data) {
+						var iconURL = "http://openweathermap.org/img/w/" + data.weather[0].icon + ".png";
+						var weatherIcon = "<img src='" + iconURL + "' alt='weatherIcon' >";
+                        var tempCel = data.main.temp - 273.15;
+                        $("#weatherJson").html("<p><strong>"+ data.name +"</strong></p>" + weatherIcon + "<br>Temperature: "+ tempCel + "°C<br>" + data.weather[0].description + "<br>Wind: "+ data.wind.speed + " m/s" + "<br>Clouds: " + data.clouds.all + " %");
+
+
+                    })
+                    
+                };
+
+                function geolocationError(error){
+                     alert('code: '    + error.code    + '\n' +
+                      'message: ' + error.message + '\n');
+                }
+                navigator.geolocation.getCurrentPosition(geolocationSuccess, geolocationError);
+            };
+        
+            
+        
+        //Distance retriever AJAX
+        $(document).on("pagecreate", "#distPage", function() {
+			console.log("Distance page created");           
+
+            
+            $("#get").on("click", function(){
+                var cityFrom = $("#from").val();
+                var cityTo = $("#to").val();
+                        
+                $.ajax({
+                    url: "https://maps.googleapis.com/maps/api/distancematrix/json?units=metrics&origins=" + cityFrom + "&destinations=" + cityTo,
+                    dataType: "json",
+                    timeout: 5000
+                })
+                .done(function(data) {
+                    console.log(data);
+                    var distance = data.rows[0].elements[0].distance.text;
+                    var duration = data.rows[0].elements[0].duration.text;
+                    $("#result").html("Distance is " + distance + " and estimated time " + duration);
+                    
+                })
+            })
+
+        
+		});
+        
+        
+		$(document).on("pagecreate", "#lunchPage", function() {
+			console.log("Lunchpage created");
+			//Fetch lunch
+            
+            fetchLunch();
+		})		
+		
+        //Lunch Retriever
+        function fetchLunch() {
+                $.ajax({
+                    url: "http://www.amica.fi/modules/json/json/Index?costNumber=0083&language=en",
+                    dataType: "json",
+                    timeout: 5000
+                })
+                .done(function(data) {
+                    var lunchStr = "";
+                    for(var i = 0; i < data.MenusForDays.length; i++){
+                        var menuDateLong = data.MenusForDays[i].Date;
+                        var menuDateShort = menuDateLong.substr(0, 10);
+                        
+                        lunchStr += "<strong>" + menuDateShort + "</strong>"+ "<br>";
+                        for(var j = 0; j < data.MenusForDays[i].SetMenus.length; j++){
+                            lunchStr += data.MenusForDays[i].SetMenus[j].Components + ", ";
+                        }
+                        lunchStr += "<br><br><br>";
+                    }
+                    
+                    
+                    $("#lunchJson").html("<p><strong>Lunch</strong></p>" + lunchStr);
+                    
+                    
+                    
+                })
+            };
+        
+    </script>
+    <script type="text/javascript">
+        app.initialize();
+    </script>
+
+</body>
+
+</html>
